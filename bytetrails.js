@@ -55,8 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         moveNpc();
 
-        if (checkCollision(player) || checkCollision(npc) || detectCollision(player, npc)) {
-            endGame();
+        if (checkCollision(player) || detectCollision(player, npc)) {
+            endGame("Yikes! Rezner beat you. Try again!");
+            return;
+        } else if (checkCollision(npc)) {
+            endGame("You beat Rezner! Congratulations!")
             return;
         }
 
@@ -140,9 +143,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillRect(npc.x, npc.y, cellSize, cellSize);
     }
 
-    function endGame() {
+    function endGame(winmessage) {
         clearInterval(gameInterval);
-        alert("Game Over! Press Play to try again.");
+        alert(winmessage);
         document.body.removeChild(canvas);
         document.querySelector(".game-container").innerHTML = `
 <h1 class="game-title">Byte Trails</h1>

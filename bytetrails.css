@@ -55,3 +55,6 @@ body {
   text-shadow: 0 0 5px #00ffff, 0 0 10px #00ccff;
 }
 
+audio {
+    display: none;
+}
