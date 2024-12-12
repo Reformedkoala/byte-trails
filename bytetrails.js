@@ -73,20 +73,106 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function moveNpc() {
-        if (Math.random() < 0.1) {
-            const newDirection = directions[Math.floor(Math.random() * directions.length)];
+        //console.log(npc.dx)
+        //console.log(npc.dy)
+        let validDirections = [0,1,2,3]; // U,D,L,R
+        let currentDirection = 0;
+        if (npc.dx === 0) {
+            if (npc.dy === cellSize) { // down
+                currentDirection = 1;
+                validDirections = validDirections.filter(function(e) { return e !== 0}); // up is not a valid direction
+                //console.log("removing up because im going down rn");
+            } else if (npc.dy === -cellSize) { // up
+                currentDirection = 0;
+                validDirections = validDirections.filter(function(e) { return e !== 1}); // down is not a valid direction
+                //console.log("removing down because im going up rn");
+            } else { console.log("bug with npc velocity in the up/down direction"); }
+        } else if (npc.dx === -cellSize) {
+            currentDirection = 2;
+            validDirections = validDirections.filter(function(e) { return e !== 3}); // right is not a valid direction
+            //console.log("removing right because im going left rn");
+        } else if (npc.dx === cellSize) {
+            currentDirection = 3;
+            validDirections = validDirections.filter(function(e) { return e !== 2}); // left is not a valid direction
+            //console.log("removing left because im going right rn");
+        } else { console.log("bug with npc velocity in the left/right direction"); }
+
+        if (npc.x - (cellSize) < 0) {
+            validDirections = validDirections.filter(function(e) { return e !== 2}); // don't go off the map to the left
+            console.log("removing left because i'll go off the map");
+        } else if (npc.x + (2*cellSize) > canvasWidth) {
+            validDirections = validDirections.filter(function(e) { return e !== 3}); // don't go off the map to the right
+            console.log("removing right because i'll go off the map");
+        } else if (npc.y - (cellSize) < 0) {
+            validDirections = validDirections.filter(function(e) { return e !== 0}); // don't go off the map upwards
+            console.log("removing up because i'll go off the map");
+        } else if (npc.y + (2*cellSize) > canvasHeight) {
+            validDirections = validDirections.filter(function(e) { return e !== 1}); // don't go off the map downwards
+            console.log("removing down because i'll go off the map");
+        }
+        for (let dir of validDirections) {
+            let trailAhead = false;
+            let newMove = { x: npc.x, y: npc.y };
+            switch (dir) {
+                case 0:
+                    newMove.y = newMove.y - cellSize;
+                    break;
+                case 1:
+                    newMove.y = newMove.y + cellSize;
+                    break;
+                case 2:
+                    newMove.x = newMove.x - cellSize;
+                    break;
+                case 3:
+                    newMove.x = newMove.x + cellSize;
+                    break;
+                default:
+                    console.log("bug with valid directions when check if a trail is ahead");
+                    break;
+            }
+            if (newMove.x === player.x && newMove.y === player.y) {
+                trailAhead = true;
+            } else {
+                for (let segment of npc.trail) {
+                    if (newMove.x === segment.x && newMove.y === segment.y) {
+                        trailAhead = true;
+                        break;
+                    }
+                }
+                if (!trailAhead) {
+                    for (let segment of player.trail) {
+                        if (newMove.x === segment.x && newMove.y === segment.y) {
+                            trailAhead = true;
+                            break;
+                        }
+                    }
+                }
+                
+            }
+            if (trailAhead) {
+                validDirections = validDirections.filter(function(e) { return e !== dir}); // don't run into a trail
+                console.log(dir)
+                console.log("removing above direction because i'll run into a trail");
+            }
+        }
+        
+        if (validDirections.length == 0) {
+            moveEntity(npc);
+            return;
+        } else if (validDirections.includes(currentDirection) && Math.random() > 0.1) {
+            moveEntity(npc);
+            return;
+        } else {
+            const newDirection = directions[validDirections[Math.floor(Math.random() * validDirections.length)]];
+            console.log(newDirection)
             npc.dx = newDirection.dx;
             npc.dy = newDirection.dy;
-        }
-        moveEntity(npc);
-        if (npc.x < 0 || npc.y < 0 || npc.x >= canvasWidth || npc.y >= canvasHeight) {
-            npc.dx = -npc.dx;
-            npc.dy = -npc.dy;
+            moveEntity(npc);
         }
     }
 
     function checkCollision(entity) {
-        if (entity.x < 0 || entity.y < 0 || entity.x >= canvasWidth || entity.y >= canvasHeight) {
+        if (entity.x < 0 || entity.y < 0 || entity.x > canvasWidth || entity.y > canvasHeight) {
             return true;
         }
 
@@ -126,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         ctx.fillStyle = "#00ffff";
-        console.log(player.trail);
+        //console.log(player.trail);
         for (let segment of player.trail) {
             ctx.fillRect(segment.x, segment.y, cellSize, cellSize);
         }
